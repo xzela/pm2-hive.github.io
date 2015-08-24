@@ -7,7 +7,7 @@ permalink: /docs/usage/use-pm2-with-cloud-providers/
 
 # Using PM2 in Cloud Providers
 
-Some time you do no have access to a raw CLI to start your Node.js applications.
+Sometimes you do not have access to a raw CLI to start your Node.js applications.
 By using the PM2 programmatic interface, you can manage your Node.js app very easily.
 
 ## Heroku / Google App Engine / Azure
@@ -20,22 +20,22 @@ First add PM2 as a dependency in you package.json, then just create a main.js fi
 var pm2 = require('pm2');
 
 var instances = process.env.WEB_CONCURRENCY || -1; // Set by Heroku or -1 to scale to max cpu core -1
-var maxMemory = process.env.WEB_MEMORY || 512;    // " " "
+var maxMemory = process.env.WEB_MEMORY || 512;     // Max memory in Heroku's free/hobby/1x dynos is 512mb
 
 pm2.connect(function() {
   pm2.start({
     script    : 'app.js',
-    name      : 'production-app',     // ----> THESE ATTRIBUTES ARE OPTIONAL:
-    exec_mode : 'cluster',            // ----> https://github.com/Unitech/PM2/blob/master/ADVANCED_README.md#schema
+    name      : 'production-app',         // THESE ATTRIBUTES ARE OPTIONAL:
+    exec_mode : 'cluster',                // https://github.com/Unitech/PM2/blob/master/ADVANCED_README.md#schema
     instances : instances,
-    max_memory_restart : maxMemory + 'M',   // Auto restart if process taking more than XXmo
-    env: {                            // If needed declare some environment variables
+    max_memory_restart : maxMemory + 'M', // Auto restart if process taking more than maxMemory mb
+    env: {                                // If needed declare some environment variables
       "NODE_ENV": "production",
       "AWESOME_SERVICE_API_TOKEN": "xxx"
     },
   }, function(err) {
     if (err) return console.error('Error while launching applications', err.stack || err);
-    console.log('PM2 and application has been succesfully started');
+    console.log('PM2 and application have been succesfully started');
   });
 });
 ```
@@ -52,22 +52,24 @@ var PRIVATE_KEY  = 'XXXXX';   // Keymetrics Private key
 var PUBLIC_KEY   = 'XXXXX';   // Keymetrics Public  key
 
 var instances = process.env.WEB_CONCURRENCY || -1; // Set by Heroku or -1 to scale to max cpu core -1
-var maxMemory = process.env.WEB_MEMORY      || 512;// " " "
+var maxMemory = process.env.WEB_MEMORY || 512;     // Max memory in Heroku's free/hobby/1x dynos is 512mb
 
 pm2.connect(function() {
+  
   pm2.start({
     script    : 'app.js',
-    name      : 'production-app',     // ----> THESE ATTRIBUTES ARE OPTIONAL:
-    exec_mode : 'cluster',            // ----> https://github.com/Unitech/PM2/blob/master/ADVANCED_README.md#schema
+    name      : 'production-app',         // THESE ATTRIBUTES ARE OPTIONAL:
+    exec_mode : 'cluster',                // https://github.com/Unitech/PM2/blob/master/ADVANCED_README.md#schema
     instances : instances,
-    max_memory_restart : maxMemory + 'M',   // Auto restart if process taking more than XXmo
-    env: {                            // If needed declare some environment variables
+    max_memory_restart : maxMemory + 'M', // Auto restart if process taking more than maxMemory mb
+    env: {                                // If needed declare some environment variables
       "NODE_ENV": "production",
       "AWESOME_SERVICE_API_TOKEN": "xxx"
     },
-    post_update: ["npm install"]       // Commands to execute once we do a pull from Keymetrics
-  }, function() {
-    pm2.interact(PRIVATE_KEY, PUBLIC_KEY, MACHINE_NAME, function() {});
+    post_update: ["npm install"]          // Commands to execute once we do a pull from Keymetrics
+  }, function(err, apps) {
+    if (err) return console.error('Error while launching applications', err.stack || err);
+    pm2.interact(PRIVATE_KEY, PUBLIC_KEY, MACHINE_NAME, function(err, msg, proc) {}); // Link PM2 to Keymetrics
   });
 });
 ```
